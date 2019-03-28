@@ -1,0 +1,5 @@
+{
+    "port": "/dev/cu.usbmodem143301",
+    "board": "arduino:avr:uno",
+    "sketch": "Hashilus_temperature_ethernet.ino"
+}

@@ -1,4 +1,7 @@
 #include <ArduinoOSC.h>
+#include <Wire.h>
+#include <Adafruit_MLX90614.h>
+#include <MsTimer2.h>
 
 // Ethernet stuff
 const IPAddress ip(192, 168, 100, 65);
@@ -8,48 +11,54 @@ byte mac[] = {
 
 // for ArduinoOSC
 OscEthernet osc;
+Adafruit_MLX90614 mlx = Adafruit_MLX90614();
+
 const char* host = "192.168.100.7";
 const int recv_port = 9999;
 const int send_port = 9999;
 
-void setup()
-{
-    Serial.begin(115200);
+void sendTemperature(void){
+  float objectTemp = mlx.readObjectTempC();
+  float ambientTemp = mlx.readAmbientTempC();
+  Serial.println(objectTemp);
+  OscMessage msg(host, send_port, "/send");
+  msg.push(objectTemp);
+  osc.send(msg);
+}
 
-
+void ethernetInit (void){
   // start the Ethernet connection:
   Serial.println("Initialize Ethernet with DHCP:");
-  if (Ethernet.begin(mac) == 0) {
+  if (Ethernet.begin(mac) == 0){
     Serial.println("Failed to configure Ethernet using DHCP");
-    if (Ethernet.hardwareStatus() == EthernetNoHardware) {
+    if (Ethernet.hardwareStatus() == EthernetNoHardware){
       Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
-    } else if (Ethernet.linkStatus() == LinkOFF) {
+    }
+    else if (Ethernet.linkStatus() == LinkOFF){
       Serial.println("Ethernet cable is not connected.");
     }
-    // no point in carrying on, so do nothing forevermore:
-    while (true) {
+    while (true){
       delay(1);
     }
   }
-  // print your local IP address:
   Serial.print("My IP address: ");
   Serial.println(Ethernet.localIP());
-    // Ethernet stuff
-    Ethernet.begin(mac, ip);
+  Ethernet.begin(mac, ip);
+}
 
-    // ArduinoOSC
+void setup(){
+    pinMode(2, OUTPUT);
+    pinMode(13, OUTPUT);
+    digitalWrite(2, LOW);
+    digitalWrite(13, LOW);
+
+    Serial.begin(115200);
+    mlx.begin();
+    MsTimer2::set(1000, sendTemperature);
+    MsTimer2::start();
+    ethernetInit();
     osc.begin(recv_port);
-    /*
-    osc.subscribe("/test", [](OscMessage& m)
-    {
-        Serial.print("/test : ");
-        Serial.print(m.ip()); Serial.print(" ");
-        Serial.print(m.port()); Serial.print(" ");
-        Serial.print(m.size()); Serial.print(" ");
-        Serial.print(m.address()); Serial.print(" ");
-        Serial.print(m.getArgAsInt32(0)); Serial.println();
-    });
-    */
+
     osc.subscribe("/need/reply", [](OscMessage &m) {
     Serial.print("/need/reply: ");
     Serial.print(m.ip());
@@ -62,25 +71,9 @@ void setup()
     Serial.print(" ");
     Serial.print(m.getArgAsInt32(0)); Serial.println();
     Serial.println();
-    //osc.send(host, send_port, "/send", 12);
   });
-
-    // TODO: TBD
-    // osc.publish(host, send_port, "/value", value);
-    // osc.publish(host, send_port, "/millis", &millis);
 }
 
-void loop()
-{
-  float objectTemp = 90.2;
-  float ambientTemp = 32.1;
-  float i = objectTemp;
-  OscMessage msg(host, send_port, "/send");
-  msg.push(i);
-  osc.send(msg);
-  //osc.send(host, send_port, "/objectTemp", objectTemp);// float
-  //osc.send(host, send_port, "/switch", switch_state); // boolean
-  //osc.send(host, send_port, "/test", 123);
-  osc.parse(); // should be called
-  delay(100);
+void loop(){
+  osc.parse();
 }
