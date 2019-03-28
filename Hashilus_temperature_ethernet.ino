@@ -3,11 +3,10 @@
 #include <Adafruit_MLX90614.h>
 #include <MsTimer2.h>
 
+
 // Ethernet stuff
 const IPAddress ip(192, 168, 100, 65);
-byte mac[] = {
-  0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02
-};
+byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 
 // for ArduinoOSC
 OscEthernet osc;
@@ -46,20 +45,8 @@ void ethernetInit (void){
   Ethernet.begin(mac, ip);
 }
 
-void setup(){
-    pinMode(2, OUTPUT);
-    pinMode(13, OUTPUT);
-    digitalWrite(2, LOW);
-    digitalWrite(13, LOW);
-
-    Serial.begin(115200);
-    mlx.begin();
-    MsTimer2::set(1000, sendTemperature);
-    MsTimer2::start();
-    ethernetInit();
-    osc.begin(recv_port);
-
-    osc.subscribe("/need/reply", [](OscMessage &m) {
+void subscribeTrigger(void){
+  osc.subscribe("/need/reply", [](OscMessage &m) {
     Serial.print("/need/reply: ");
     Serial.print(m.ip());
     Serial.print(" ");
@@ -69,9 +56,56 @@ void setup(){
     Serial.print(" ");
     Serial.print(m.address());
     Serial.print(" ");
-    Serial.print(m.getArgAsInt32(0)); Serial.println();
+    Serial.print(m.getArgAsInt32(0));
+    Serial.println();
     Serial.println();
   });
+
+  osc.subscribe("/set/maxTemp", [](OscMessage &m) {
+    Serial.print("/set/maxTemp: ");
+    Serial.print(m.ip());
+    Serial.print(" ");
+    Serial.print(m.port());
+    Serial.print(" ");
+    Serial.print(m.size());
+    Serial.print(" ");
+    Serial.print(m.address());
+    Serial.print(" ");
+    Serial.print(m.getArgAsInt32(0));
+    Serial.println();
+    Serial.println();
+  });
+
+  osc.subscribe("/set/maxTime", [](OscMessage &m) {
+    Serial.print("/set/maxTemp: ");
+    Serial.print(m.ip());
+    Serial.print(" ");
+    Serial.print(m.port());
+    Serial.print(" ");
+    Serial.print(m.size());
+    Serial.print(" ");
+    Serial.print(m.address());
+    Serial.print(" ");
+    Serial.print(m.getArgAsInt32(0));
+    Serial.println();
+    Serial.println();
+  });
+}
+
+void setup(){
+    pinMode(2, OUTPUT);
+    pinMode(13, OUTPUT);
+    digitalWrite(2, LOW);
+    digitalWrite(13, LOW);
+
+    Serial.begin(115200);
+    mlx.begin();
+    MsTimer2::set(1000, sendTemperature); // 1000ms Timer
+    MsTimer2::start();
+    ethernetInit();
+    osc.begin(recv_port);
+
+    
 }
 
 void loop(){
