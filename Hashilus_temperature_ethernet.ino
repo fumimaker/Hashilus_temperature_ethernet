@@ -16,7 +16,7 @@ const char* host = "192.168.100.7";
 const int recv_port = 9999;
 const int send_port = 9999;
 int32_t maxTemp = 0, maxTime = 5;
-
+int counter1000 = 0;
 
 void sendTemperature(void){
   float objectTemp = mlx.readObjectTempC();
@@ -63,7 +63,7 @@ void subscribeTrigger(void){
   });
 
   osc.subscribe("/set/maxTime", [](OscMessage &m) {
-    Serial.print("/set/maxTemp: ");
+    Serial.print("/set/maxTime: ");
     Serial.print(m.ip());
     Serial.print(" ");
     Serial.print(m.port());
@@ -127,7 +127,12 @@ void setup(){
 
 void loop(){
   //osc.parse();
-  sendTemperature();
+  if(counter1000>1000){
+    sendTemperature();
+    counter1000 = 0;
+  }
+  //sendTemperature();
   osc.parse();
-  delay(100);
+  counter1000++;
+  delay(1);
 }
