@@ -1,7 +1,7 @@
 #include <ArduinoOSC.h>
 #include <Wire.h>
 #include <Adafruit_MLX90614.h>
-#include <MsTimer2.h>
+//#include <MsTimer2.h>
 
 
 // Ethernet stuff
@@ -15,17 +15,14 @@ Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 const char* host = "192.168.100.7";
 const int recv_port = 9999;
 const int send_port = 9999;
-int32_t maxTemp = 0, maxTime = 5;
-int counter1000 = 0, tempCounter = 0;
+int32_t maxTemp = 50, maxTime = 5;
+int counter = 0, tempCounter = 0;
 boolean SSR_status = false;
 
+uint32_t delta_time = 0;
+
 void sendTemperature(void){
-  float objectTemp = mlx.readObjectTempC();
-  float ambientTemp = mlx.readAmbientTempC();
-  Serial.println(objectTemp);
-  OscMessage msg(host, send_port, "/temp");
-  msg.push(objectTemp).push(SSR_status);
-  osc.send(msg);
+  
 }
 
 void subscribeTrigger(void){
@@ -73,9 +70,11 @@ void subscribeTrigger(void){
     Serial.print(" ");
     Serial.print(m.address());
     Serial.print(" ");
-    Serial.print(m.getArgAsInt32(0));
+    int32_t tmp = m.getArgAsInt32(0);
+    Serial.print(tmp);
     Serial.println();
     Serial.println();
+    maxTime = tmp;
   });
 
   osc.subscribe("/set/reset", [](OscMessage &m) {
@@ -88,13 +87,17 @@ void subscribeTrigger(void){
     Serial.print(" ");
     Serial.print(m.address());
     Serial.print(" ");
-    Serial.print(m.getArgAsInt32(0));
+    int32_t tmp = m.getArgAsInt32(0);
+    Serial.print(tmp);
     Serial.println();
     Serial.println();
+    if(tmp>0){
+      SSR_status = true;
+    }
+    else{
+      SSR_status = false;
+    }
   });
-}
-void test(){
-  
 }
 
 void setup(){
@@ -122,25 +125,36 @@ void setup(){
     subscribeTrigger();
     osc.begin(recv_port);
     mlx.begin();
-    //MsTimer2::set(100, test); // 1000ms Timer
-    //MsTimer2::start();
 }
 
 void loop(){
-  if(counter1000>1000){
-    //sendTemperature();
-    counter1000 = 0;
-    /*
-    if (mlx.readObjectTempC() > maxTemp){
+  if((millis() - delta_time) > 1000){
+    Serial.println(millis() - delta_time);
+    float objectTemp = mlx.readObjectTempC();
+    float ambientTemp = mlx.readAmbientTempC();
+    Serial.println(objectTemp);
+    
+    OscMessage msg(host, send_port, "/temp");
+    msg.push(objectTemp).push(SSR_status);
+    osc.send(msg);
+    
+    
+    if(objectTemp > maxTemp){
       tempCounter++;
+      Serial.print("Over temperature ++ ");
+      Serial.println(tempCounter);
     }
     if(tempCounter > maxTime){
       SSR_status = false;
-    }*/
+      tempCounter = 0;
+      Serial.print("tempCounter > maxTime: ");
+      Serial.println(SSR_status);
+    }
+    delta_time = millis();
   }
-  sendTemperature();
+  
+  //sendTemperature();
   osc.parse();
-  counter1000++;
-  //digitalWrite(2, SSR_status);
-  delay(1);
+  digitalWrite(2, SSR_status);
+  //Serial.println(millis());
 }
