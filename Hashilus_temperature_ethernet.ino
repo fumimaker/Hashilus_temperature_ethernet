@@ -25,26 +25,6 @@ void sendTemperature(void){
   osc.send(msg);
 }
 
-void ethernetInit (void){
-  // start the Ethernet connection:
-  Serial.println("Initialize Ethernet with DHCP:");
-  if (Ethernet.begin(mac) == 0){
-    Serial.println("Failed to configure Ethernet using DHCP");
-    if (Ethernet.hardwareStatus() == EthernetNoHardware){
-      Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
-    }
-    else if (Ethernet.linkStatus() == LinkOFF){
-      Serial.println("Ethernet cable is not connected.");
-    }
-    while (true){
-      delay(1);
-    }
-  }
-  Serial.print("My IP address: ");
-  Serial.println(Ethernet.localIP());
-  Ethernet.begin(mac, ip);
-}
-
 void subscribeTrigger(void){
   osc.subscribe("/need/reply", [](OscMessage &m) {
     Serial.print("/need/reply: ");
@@ -90,6 +70,21 @@ void subscribeTrigger(void){
     Serial.println();
     Serial.println();
   });
+
+  osc.subscribe("/set/reset", [](OscMessage &m) {
+    Serial.print("/set/maxTemp: ");
+    Serial.print(m.ip());
+    Serial.print(" ");
+    Serial.print(m.port());
+    Serial.print(" ");
+    Serial.print(m.size());
+    Serial.print(" ");
+    Serial.print(m.address());
+    Serial.print(" ");
+    Serial.print(m.getArgAsInt32(0));
+    Serial.println();
+    Serial.println();
+  });
 }
 
 void setup(){
@@ -99,13 +94,32 @@ void setup(){
     digitalWrite(13, LOW);
 
     Serial.begin(115200);
-    mlx.begin();
-    MsTimer2::set(1000, sendTemperature); // 1000ms Timer
-    MsTimer2::start();
-    ethernetInit();
-    osc.begin(recv_port);
-
     
+    Serial.println("Initialize Ethernet with DHCP:");
+    if (Ethernet.begin(mac) == 0)
+    {
+      Serial.println("Failed to configure Ethernet using DHCP");
+      if (Ethernet.hardwareStatus() == EthernetNoHardware)
+      {
+        Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
+      }
+      else if (Ethernet.linkStatus() == LinkOFF)
+      {
+        Serial.println("Ethernet cable is not connected.");
+      }
+      while (true)
+      {
+        delay(1);
+      }
+    }
+    Serial.print("My IP address: ");
+    Serial.println(Ethernet.localIP());
+    Ethernet.begin(mac, ip);
+    subscribeTrigger();
+    osc.begin(recv_port);
+    mlx.begin();
+    MsTimer2::set(100, sendTemperature); // 1000ms Timer
+    MsTimer2::start();
 }
 
 void loop(){
