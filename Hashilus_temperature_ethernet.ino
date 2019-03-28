@@ -1,6 +1,8 @@
 #include <ArduinoOSC.h>
 #include <Wire.h>
 #include <Adafruit_MLX90614.h>
+//#include <Ethernet.h>
+//#include <SPI.h>
 //#include <MsTimer2.h>
 
 
@@ -71,6 +73,7 @@ void subscribeTrigger(void){
     Serial.print(m.address());
     Serial.print(" ");
     int32_t tmp = m.getArgAsInt32(0);
+    Serial.print("Set max temperature: ");
     Serial.print(tmp);
     Serial.println();
     Serial.println();
@@ -78,6 +81,7 @@ void subscribeTrigger(void){
   });
 
   osc.subscribe("/set/reset", [](OscMessage &m) {
+    
     Serial.print("/set/maxTemp: ");
     Serial.print(m.ip());
     Serial.print(" ");
@@ -87,10 +91,14 @@ void subscribeTrigger(void){
     Serial.print(" ");
     Serial.print(m.address());
     Serial.print(" ");
+    
     int32_t tmp = m.getArgAsInt32(0);
+    
+    Serial.print("Set max time: ");
     Serial.print(tmp);
     Serial.println();
     Serial.println();
+    
     if(tmp>0){
       SSR_status = true;
     }
@@ -126,9 +134,10 @@ void setup(){
     osc.begin(recv_port);
     mlx.begin();
 }
+    
 
 void loop(){
-  if((millis() - delta_time) > 1000){
+  if((millis() - delta_time) > 100){
     Serial.println(millis() - delta_time);
     float objectTemp = mlx.readObjectTempC();
     float ambientTemp = mlx.readAmbientTempC();
@@ -150,11 +159,13 @@ void loop(){
       Serial.print("tempCounter > maxTime: ");
       Serial.println(SSR_status);
     }
+    osc.parse();
+    digitalWrite(2, SSR_status);
     delta_time = millis();
   }
   
   //sendTemperature();
-  osc.parse();
-  digitalWrite(2, SSR_status);
+  
+  
   //Serial.println(millis());
 }
