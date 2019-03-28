@@ -15,6 +15,8 @@ Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 const char* host = "192.168.100.7";
 const int recv_port = 9999;
 const int send_port = 9999;
+int32_t maxTemp = 0, maxTime = 5;
+
 
 void sendTemperature(void){
   float objectTemp = mlx.readObjectTempC();
@@ -39,6 +41,8 @@ void subscribeTrigger(void){
     Serial.print(m.getArgAsInt32(0));
     Serial.println();
     Serial.println();
+    maxTime = m.getArgAsInt32(0);
+    Serial.println(maxTime);
   });
 
   osc.subscribe("/set/maxTemp", [](OscMessage &m) {
@@ -54,6 +58,8 @@ void subscribeTrigger(void){
     Serial.print(m.getArgAsInt32(0));
     Serial.println();
     Serial.println();
+    maxTemp = m.getArgAsInt32(0);
+    Serial.println(maxTemp);
   });
 
   osc.subscribe("/set/maxTime", [](OscMessage &m) {
@@ -86,13 +92,14 @@ void subscribeTrigger(void){
     Serial.println();
   });
 }
+void test(){
+  
+}
 
 void setup(){
     pinMode(2, OUTPUT);
-    pinMode(13, OUTPUT);
     digitalWrite(2, LOW);
-    digitalWrite(13, LOW);
-
+    
     Serial.begin(115200);
     
     Serial.println("Initialize Ethernet with DHCP:");
@@ -114,10 +121,13 @@ void setup(){
     subscribeTrigger();
     osc.begin(recv_port);
     mlx.begin();
-    MsTimer2::set(100, sendTemperature); // 1000ms Timer
-    MsTimer2::start();
+    //MsTimer2::set(100, test); // 1000ms Timer
+    //MsTimer2::start();
 }
 
 void loop(){
+  //osc.parse();
+  sendTemperature();
   osc.parse();
+  delay(100);
 }
