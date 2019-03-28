@@ -16,14 +16,15 @@ const char* host = "192.168.100.7";
 const int recv_port = 9999;
 const int send_port = 9999;
 int32_t maxTemp = 0, maxTime = 5;
-int counter1000 = 0;
+int counter1000 = 0, tempCounter = 0;
+boolean SSR_status = false;
 
 void sendTemperature(void){
   float objectTemp = mlx.readObjectTempC();
   float ambientTemp = mlx.readAmbientTempC();
   Serial.println(objectTemp);
   OscMessage msg(host, send_port, "/temp");
-  msg.push(objectTemp);
+  msg.push(objectTemp).push(SSR_status);
   osc.send(msg);
 }
 
@@ -126,13 +127,20 @@ void setup(){
 }
 
 void loop(){
-  //osc.parse();
   if(counter1000>1000){
-    sendTemperature();
+    //sendTemperature();
     counter1000 = 0;
+    /*
+    if (mlx.readObjectTempC() > maxTemp){
+      tempCounter++;
+    }
+    if(tempCounter > maxTime){
+      SSR_status = false;
+    }*/
   }
-  //sendTemperature();
+  sendTemperature();
   osc.parse();
   counter1000++;
+  //digitalWrite(2, SSR_status);
   delay(1);
 }
