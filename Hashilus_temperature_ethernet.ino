@@ -20,7 +20,7 @@ void sendTemperature(void){
   float objectTemp = mlx.readObjectTempC();
   float ambientTemp = mlx.readAmbientTempC();
   Serial.println(objectTemp);
-  OscMessage msg(host, send_port, "/send");
+  OscMessage msg(host, send_port, "/temp");
   msg.push(objectTemp);
   osc.send(msg);
 }
@@ -96,19 +96,15 @@ void setup(){
     Serial.begin(115200);
     
     Serial.println("Initialize Ethernet with DHCP:");
-    if (Ethernet.begin(mac) == 0)
-    {
+    if (Ethernet.begin(mac) == 0){
       Serial.println("Failed to configure Ethernet using DHCP");
-      if (Ethernet.hardwareStatus() == EthernetNoHardware)
-      {
+      if (Ethernet.hardwareStatus() == EthernetNoHardware){
         Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
       }
-      else if (Ethernet.linkStatus() == LinkOFF)
-      {
+      else if (Ethernet.linkStatus() == LinkOFF){
         Serial.println("Ethernet cable is not connected.");
       }
-      while (true)
-      {
+      while (true){
         delay(1);
       }
     }
