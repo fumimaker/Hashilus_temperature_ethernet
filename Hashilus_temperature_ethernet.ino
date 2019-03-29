@@ -15,6 +15,7 @@ OscEthernet osc;
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
 const char* host = "192.168.100.7";
+//const char* host = "192.168.100.155";
 const int recv_port = 9999;
 const int send_port = 9999;
 int32_t maxTemp = 50, maxTime = 5;
@@ -137,7 +138,7 @@ void setup(){
     
 
 void loop(){
-  if((millis() - delta_time) > 100){
+  if((millis() - delta_time) > 1000){
     Serial.println(millis() - delta_time);
     float objectTemp = mlx.readObjectTempC();
     float ambientTemp = mlx.readAmbientTempC();
@@ -159,13 +160,13 @@ void loop(){
       Serial.print("tempCounter > maxTime: ");
       Serial.println(SSR_status);
     }
-    osc.parse();
+    
     digitalWrite(2, SSR_status);
     delta_time = millis();
   }
   
   //sendTemperature();
   
-  
+  osc.parse();
   //Serial.println(millis());
 }
