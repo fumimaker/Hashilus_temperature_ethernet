@@ -8,7 +8,7 @@
 
 // Ethernet stuff
 const IPAddress ip(192, 168, 100, 65);
-byte mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
+uint8_t mac[] = {0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02};
 
 // for ArduinoOSC
 OscEthernet osc;
@@ -16,17 +16,14 @@ Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
 const char* host = "192.168.100.7";
 //const char* host = "192.168.100.155";
-const int recv_port = 9999;
-const int send_port = 9999;
-int32_t maxTemp = 50, maxTime = 5;
-int counter = 0, tempCounter = 0;
-boolean SSR_status = false;
+const int32_t recv_port = 9999;
+const int32_t send_port = 9999;
 
+int32_t maxTemp = 50, maxTime = 5;
+int32_t counter = 0, tempCounter = 0;
 uint32_t delta_time = 0;
 
-void sendTemperature(void){
-  
-}
+boolean SSR_status = false;
 
 void subscribeTrigger(void){
   osc.subscribe("/need/reply", [](OscMessage &m) {
@@ -164,9 +161,5 @@ void loop(){
     digitalWrite(2, SSR_status);
     delta_time = millis();
   }
-  
-  //sendTemperature();
-  
   osc.parse();
-  //Serial.println(millis());
 }
